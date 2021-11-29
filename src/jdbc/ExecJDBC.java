@@ -7,6 +7,9 @@
  *
  */
 
+import org.apache.shardingsphere.driver.api.yaml.YamlShardingSphereDataSourceFactory;
+
+import javax.sql.DataSource;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
@@ -30,9 +33,18 @@ public class ExecJDBC {
     // Register jdbcDriver
     Class.forName(ini.getProperty( "driver" ));
 
+    String  ssJdbcYamlLocation  = ini.getProperty("ssJdbcYamlLocation");
+
     // make connection
-    conn = DriverManager.getConnection(ini.getProperty("conn"),
-      ini.getProperty("user"),ini.getProperty("password"));
+    if (ssJdbcYamlLocation != null) {
+        // 创建 ShardingSphereDataSource
+        System.out.println("Creating ss datasource ..., jdbcLocation=" + ssJdbcYamlLocation);
+        DataSource dataSource = YamlShardingSphereDataSourceFactory.createDataSource(new File(ssJdbcYamlLocation));
+        conn = dataSource.getConnection();
+    } else {
+        conn = DriverManager.getConnection(ini.getProperty("conn"),
+        ini.getProperty("user"),ini.getProperty("password"));
+    }
     conn.setAutoCommit(true);
 
     // Create Statement

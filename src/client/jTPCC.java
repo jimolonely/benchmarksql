@@ -8,7 +8,9 @@
  */
 
 import org.apache.log4j.*;
+import org.apache.shardingsphere.driver.api.yaml.YamlShardingSphereDataSourceFactory;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.nio.file.*;
 import java.sql.*;
@@ -85,6 +87,7 @@ public class jTPCC implements jTPCCConfig
 	String  iConn               = getProp(ini,"conn");
 	String  iUser               = getProp(ini,"user");
 	String  iPassword           = ini.getProperty("password");
+	String  ssJdbcYamlLocation  = getProp(ini,"ssJdbcYamlLocation");
 
 	log.info("Term-00, ");
 	String  iWarehouses         = getProp(ini,"warehouses");
@@ -471,8 +474,16 @@ public class jTPCC implements jTPCCConfig
 
 			String terminalName = "Term-" + (i>=9 ? ""+(i+1) : "0"+(i+1));
 			Connection conn = null;
+
+			if (ssJdbcYamlLocation != null) {
+				// 创建 ShardingSphereDataSource
+				printMessage("Creating ss datasource ...");
+				DataSource dataSource = YamlShardingSphereDataSourceFactory.createDataSource(new File(ssJdbcYamlLocation));
+				conn = dataSource.getConnection();
+			} else {
+				conn = DriverManager.getConnection(database, dbProps);
+			}
 			printMessage("Creating database connection for " + terminalName + "...");
-			conn = DriverManager.getConnection(database, dbProps);
 			conn.setAutoCommit(false);
 
 			jTPCCTerminal terminal = new jTPCCTerminal
